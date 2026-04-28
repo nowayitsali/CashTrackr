@@ -8,27 +8,61 @@
   }
 
   body {
-    @apply bg-white text-gray-900;
+    background-color: #ffffff;
+    color: #111827;
     font-family: 'Inter', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-bold;
+    font-weight: 700;
   }
 
   h1 {
-    @apply text-4xl;
+    font-size: 2.25rem;
+    line-height: 2.5rem;
   }
 
   h2 {
-    @apply text-3xl;
+    font-size: 1.875rem;
+    line-height: 2.25rem;
   }
 
   h3 {
-    @apply text-2xl;
+    font-size: 1.5rem;
+    line-height: 2rem;
   }
 
   button {
-    @apply cursor-pointer transition-all duration-200;
+    cursor: pointer;
+    transition-property: all;
+    transition-duration: 200ms;
+  }
+}
+
+@layer utilities {
+  .font-pt-serif {
+    font-family: 'PT Serif', serif;
+  }
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-up {
+    animation: fade-up 0.6s ease-out both;
+  }
+
+  .title-serif {
+    font-family: 'PT Serif', serif;
+    font-size: 36px;
+    line-height: 1.1;
   }
 }

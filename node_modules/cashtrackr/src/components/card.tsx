@@ -9,15 +9,15 @@ interface CardProps {
 }
 
 const themes = {
-  light: "bg-white text-gray-800",
-  dark: "bg-[#08090C] text-white",
+  light: "bg-white text-gray-800 border border-gray-500/40",
+  dark: "bg-[#08090C] text-white border border-gray-300/20",
   navy: "bg-[#151821] text-white",
 };
 
 const sizes = {
-  sm: "p-4",
-  md: "p-8",
-  lg: "p-12",
+  sm: "p-8 h-[200px]",
+  md: "p-8 h-[400px]",
+  lg: "p-8 h-[600px]",
 };
 
 function Card({
@@ -28,7 +28,7 @@ function Card({
 }: CardProps) {
   return (
     <div
-      className={`flex flex-col gap-4 ${themes[theme]} ${sizes[size]} rounded-lg shadow-lg text-center ${className}`}
+      className={`flex flex-col items-center gap-4 ${themes[theme]} ${sizes[size]} rounded-3xl text-center ${className}`}
     >
       {children}
     </div>

@@ -6,8 +6,8 @@ import AddExpense from "./pages/AddExpense";
 import ManageExpenses from "./pages/ManageExpenses";
 
 const router = createBrowserRouter([
-  { path: "/", element: <Login /> },
-  { path: "/dashboard", element: <Dashboard /> },
+  { path: "/login", element: <Login /> },
+  { path: "/", element: <Dashboard /> },
   { path: "/register", element: <Register /> },
   { path: "/add-expense", element: <AddExpense /> },
   { path: "/manage-expenses", element: <ManageExpenses /> },
