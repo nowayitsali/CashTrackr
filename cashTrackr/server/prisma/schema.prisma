@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  name         String?   @db.VarChar(255)
+  email        String    @unique @db.VarChar(255)
+  passwordHash String    @map("password_hash")
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt    DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@map("user")
+}
+
+model Category {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @map("user_id")
+  name      String    @db.VarChar(255)
+  color     String?   @db.VarChar(50)
+  icon      String?   @db.VarChar(100)
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@map("category")
+}
+
+model Expense {
+  id          Int       @id @default(autoincrement())
+  userId      Int       @map("user_id")
+  categoryId  Int?      @map("category_id")
+  title       String    @db.VarChar(255)
+  amount      Decimal   @db.Decimal(10, 2)
+  expenseDate DateTime  @map("expense_date") @db.Date
+  note        String?
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@map("expense")
+}
+
+model Budget {
+  id           Int       @id @default(autoincrement())
+  userId       Int       @map("user_id")
+  categoryId   Int?      @map("category_id")
+  name         String    @db.VarChar(255)
+  targetAmount Decimal   @map("target_amount") @db.Decimal(10, 2)
+  period       String    @db.VarChar(50)
+  startDate    DateTime  @map("start_date") @db.Date
+  endDate      DateTime? @map("end_date") @db.Date
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@map("budget")
+}
