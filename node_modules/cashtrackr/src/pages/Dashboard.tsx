@@ -1,363 +1,437 @@
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../components/button";
 import Card from "../components/card";
 import darkModeIcon from "../assets/darkmode.png";
 import lightModeIcon from "../assets/lightmode.png";
+import {
+  authFetch,
+  clearAuthSession,
+  getToken,
+  getStoredUser,
+} from "../lib/api";
 
-const overviewCards = [
-  { label: "Balance", value: "$4,280.00" },
-  { label: "Income", value: "$6,500.00" },
-  { label: "Expenses", value: "$2,220.00" },
-];
+type ExpenseItem = {
+  id: number;
+  title: string;
+  amount: string;
+  expenseDate: string;
+  note?: string | null;
+  category?: { id: number; name: string } | null;
+};
 
-const spendingBreakdown = [
-  { label: "Food", percent: 42, color: "#3b82f6" },
-  { label: "Groceries", percent: 30, color: "#34d399" },
-  { label: "Subscriptions", percent: 28, color: "#d946ef" },
-];
+type StoredUser = {
+  id: number;
+  email: string;
+  name: string;
+};
 
-const recentExpenses = [
-  {
-    date: "Nov 08",
-    description: "Uber Eats",
-    amount: "-$20.11",
-    category: "Food",
-    color: "bg-sky-500",
-  },
-  {
-    date: "Nov 08",
-    description: "Groceries",
-    amount: "-$108.04",
-    category: "Groceries",
-    color: "bg-emerald-400",
-  },
-  {
-    date: "Nov 08",
-    description: "Open AI",
-    amount: "-$25.00",
-    category: "Subscriptions",
-    color: "bg-fuchsia-500",
-  },
-  {
-    date: "Nov 10",
-    description: "AWS",
-    amount: "-$14.99",
-    category: "Subscriptions",
-    color: "bg-fuchsia-500",
-  },
-];
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(value);
+}
 
 function Dashboard() {
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [user, setUser] = useState<StoredUser | null>(null);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!getToken()) {
+      navigate("/login");
+      return;
+    }
+
+    const storedUser = getStoredUser<StoredUser>();
+    setUser(storedUser);
+
+    async function loadExpenses() {
+      try {
+        const data = await authFetch<ExpenseItem[]>("/expenses");
+        setExpenses(data);
+      } catch (err) {
+        console.error("Failed to load expenses:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadExpenses();
+  }, [navigate]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target as Node)
+      ) {
+        setShowProfileMenu(false);
+      }
+    }
+
+    if (showProfileMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showProfileMenu]);
+
+  function handleLogout() {
+    clearAuthSession();
+    navigate("/login");
+  }
+
+  const [monthlyBudget, setMonthlyBudget] = useState<number>(() => {
+    try {
+      const raw = localStorage.getItem("monthlyBudget");
+      return raw ? Number(raw) : 1000;
+    } catch {
+      return 1000;
+    }
+  });
+  const [showGoalModal, setShowGoalModal] = useState(false);
+  const [goalInput, setGoalInput] = useState(String(monthlyBudget));
+
+  const summary = useMemo(() => {
+    const total = expenses.reduce(
+      (sum, expense) => sum + Number(expense.amount),
+      0,
+    );
+    const recent = expenses.slice(0, 5);
+
+    return { total, recent };
+  }, [expenses]);
+
+  const monthlySpent = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    return expenses
+      .filter((expense) => {
+        const date = new Date(expense.expenseDate);
+        return (
+          date.getMonth() === currentMonth && date.getFullYear() === currentYear
+        );
+      })
+      .reduce((sum, expense) => sum + Number(expense.amount), 0);
+  }, [expenses]);
+
+  const goalProgress = (monthlySpent / (monthlyBudget || 1)) * 100;
 
   return (
     <div
-      className={`relative min-h-screen w-full transition-colors ${
-        isDarkMode ? "bg-[#0F1115] text-white" : "bg-white text-gray-900"
-      }`}
+      className={`relative min-h-screen px-6 py-10 transition-colors ${isDarkMode ? "bg-[#0F1115] text-white" : "bg-white text-gray-900"}`}
     >
-      <header
-        className={`border-b px-6 py-4 ${
-          isDarkMode ? "border-white/10" : "border-gray-200"
-        }`}
+      <Link
+        to="/"
+        className={`absolute top-3 left-3 font-pt-serif text-xl font-normal transition hover:opacity-80 ${isDarkMode ? "text-white" : "text-gray-900"}`}
+        aria-label="Go to dashboard"
       >
-        <div className="flex items-center justify-between gap-4">
-          <div
-            className={`font-pt-serif text-xl font-normal ${
-              isDarkMode ? "text-white" : "text-gray-900"
+        CashTrackr
+      </Link>
+
+      <div className="absolute top-3 right-3 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setIsDarkMode((prev) => !prev)}
+          className={`flex h-10 w-10 items-center justify-center rounded-full border transition ${
+            isDarkMode
+              ? "border-white/20 bg-white/5 hover:bg-white/10"
+              : "border-gray-300 bg-black/5 hover:bg-black/10"
+          }`}
+          aria-label={
+            isDarkMode ? "Switch to light mode" : "Switch to dark mode"
+          }
+        >
+          <img
+            src={isDarkMode ? lightModeIcon : darkModeIcon}
+            alt={isDarkMode ? "Light mode" : "Dark mode"}
+            className="h-5 w-5"
+          />
+        </button>
+
+        <div className="relative" ref={profileMenuRef}>
+          <button
+            type="button"
+            onClick={() => setShowProfileMenu((prev) => !prev)}
+            className={`flex h-10 w-10 items-center justify-center rounded-full border transition ${
+              isDarkMode
+                ? "border-white/20 bg-white/5 hover:bg-white/10"
+                : "border-gray-300 bg-black/5 hover:bg-black/10"
             }`}
+            aria-label="Profile menu"
+            title={user?.name || "Profile"}
           >
-            CashTrackr
-          </div>
+            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+            </svg>
+          </button>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className={`flex h-10 w-10 items-center justify-center rounded-full border transition ${
+          {showProfileMenu && (
+            <div
+              className={`absolute top-12 right-0 rounded-lg border shadow-lg ${
                 isDarkMode
-                  ? "border-white/20 bg-white/5 hover:bg-white/10"
-                  : "border-gray-300 bg-black/5 hover:bg-black/10"
+                  ? "border-white/10 bg-[#1a1f26]"
+                  : "border-gray-200 bg-white"
               }`}
-              aria-label={
-                isDarkMode ? "Switch to light mode" : "Switch to dark mode"
-              }
             >
-              <img
-                src={isDarkMode ? lightModeIcon : darkModeIcon}
-                alt={isDarkMode ? "Light mode" : "Dark mode"}
-                className="h-5 w-5"
+              <div className="px-4 py-3 text-sm font-medium">
+                {user?.name || "User"}
+              </div>
+              <div
+                className={`border-t ${isDarkMode ? "border-white/10" : "border-gray-200"}`}
               />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => navigate("/login")}
-              className={`flex h-10 w-10 items-center justify-center rounded-full border transition ${
-                isDarkMode
-                  ? "border-white/20 bg-white/5 hover:bg-white/10"
-                  : "border-gray-300 bg-black/5 hover:bg-black/10"
-              }`}
-              aria-label="Logout"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                className={`h-5 w-5 ${isDarkMode ? "text-white" : "text-gray-900"}`}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+              <button
+                type="button"
+                onClick={() => {
+                  clearAuthSession();
+                  navigate("/login");
+                }}
+                className={`block w-full px-4 py-2 text-left text-sm transition ${
+                  isDarkMode
+                    ? "hover:bg-white/5 text-red-400"
+                    : "hover:bg-gray-100 text-red-600"
+                }`}
               >
-                <path d="M12 12m-3.2 0a3.2 3.2 0 1 0 6.4 0a3.2 3.2 0 1 0-6.4 0" />
-                <path d="M4.5 19.5c1.7-2.8 4.3-4.2 7.5-4.2s5.8 1.4 7.5 4.2" />
-              </svg>
-            </button>
+                Logout
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {showGoalModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowGoalModal(false)} />
+          <div className={`relative w-full max-w-md rounded-2xl p-6 ${isDarkMode ? "bg-[#0B0D10] text-white" : "bg-white text-gray-900"}`}>
+            <h3 className="text-lg font-semibold">Edit Monthly Goal</h3>
+            <p className="mt-2 text-sm text-gray-400">Set the monthly spending goal for progress tracking.</p>
+
+            <div className="mt-4">
+              <label className="block text-xs text-gray-400">Amount (USD)</label>
+              <input
+                type="number"
+                value={goalInput}
+                onChange={(e) => setGoalInput(e.target.value)}
+                className={`mt-1 w-full rounded-md border px-3 py-2 ${isDarkMode ? "bg-black border-white/10 text-white" : "bg-white border-gray-300 text-gray-900"}`}
+              />
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowGoalModal(false)}
+                className={`px-4 py-2 rounded-md ${isDarkMode ? "bg-white/5" : "bg-gray-100"}`}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const val = Number(goalInput) || 0;
+                  setMonthlyBudget(val);
+                  try { localStorage.setItem('monthlyBudget', String(val)); } catch {}
+                  setShowGoalModal(false);
+                }}
+                className="px-4 py-2 rounded-md bg-blue-500 text-white"
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
-      </header>
+      )}
 
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-6">
-        <section className="grid gap-6 md:grid-cols-[1.6fr_1fr]">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 pt-12">
+        <div className="grid gap-6 lg:grid-cols-3">
           <Card
             theme={isDarkMode ? "dark" : "light"}
             size="lg"
-            className="justify-between"
+            className="flex flex-col justify-between text-left lg:col-span-2"
           >
-            <div className="w-full text-left">
-              <p className="text-sm uppercase tracking-[0.3em] text-white/50">
-                Overview
-              </p>
-              <h1
-                className={`mt-3 animate-fade-up title-serif font-normal ${
-                  isDarkMode ? "text-white" : "text-gray-900"
-                }`}
+            <div className="w-full">
+              <p
+                className={`text-xs uppercase tracking-[0.2em] ${isDarkMode ? "text-white/50" : "text-gray-500"}`}
               >
-                Welcome back
+                This Month
+              </p>
+              <h1 className="mt-3 text-5xl font-bold">
+                {loading ? "..." : formatCurrency(monthlySpent)}
               </h1>
-              <p className={isDarkMode ? "text-white/70" : "text-gray-600"}>
-                Track your income, expenses, and savings in one place.
+              <p
+                className={`mt-1 text-sm ${isDarkMode ? "text-white/60" : "text-gray-600"}`}
+              >
+                Monthly spending
               </p>
             </div>
 
-            <div
-              className={`flex w-full flex-1 flex-col justify-between rounded-2xl border p-6 text-left ${
-                isDarkMode
-                  ? "border-white/10 bg-white/5"
-                  : "border-gray-200 bg-gray-50"
-              }`}
-            >
-              <div>
-                <p className="text-sm text-white/50">Your Monthly Spending</p>
-                <p className="mt-2 text-4xl font-semibold">$2,200.00</p>
+            <div className="mt-12 grid w-full grid-cols-3 gap-4">
+              <div
+                className={`rounded-lg p-6 ${isDarkMode ? "bg-white/5" : "bg-gray-100"}`}
+              >
+                <p
+                  className={`text-xs uppercase tracking-[0.2em] ${isDarkMode ? "text-white/50" : "text-gray-500"}`}
+                >
+                  Total
+                </p>
+                <p className="mt-3 text-2xl font-bold">
+                  {loading ? "..." : formatCurrency(summary.total)}
+                </p>
               </div>
-
-              <div className="mt-4 flex w-full items-center justify-between gap-6">
-                <div
-                  className="relative flex h-44 w-44 items-center justify-center rounded-full"
-                  style={{
-                    background:
-                      "conic-gradient(#3b82f6 0% 42%, #34d399 42% 72%, #d946ef 72% 100%)",
+              <div
+                className={`rounded-lg p-6 ${isDarkMode ? "bg-white/5" : "bg-gray-100"}`}
+              >
+                <p
+                  className={`text-xs uppercase tracking-[0.2em] ${isDarkMode ? "text-white/50" : "text-gray-500"}`}
+                >
+                  Expenses
+                </p>
+                <p className="mt-3 text-2xl font-bold">
+                  {loading ? "..." : expenses.length}
+                </p>
+              </div>
+              <div
+                className={`rounded-lg p-6 ${isDarkMode ? "bg-white/5" : "bg-gray-100"}`}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGoalInput(String(monthlyBudget));
+                    setShowGoalModal(true);
                   }}
+                  className="w-full text-left"
+                  aria-label="Edit monthly goal"
                 >
-                  <div
-                    className={`h-28 w-28 rounded-full ${
-                      isDarkMode ? "bg-[#0F1115]" : "bg-white"
-                    }`}
-                  />
-                </div>
-
-                <div className="flex flex-1 flex-col gap-3 text-left">
-                  {spendingBreakdown.map((item) => (
-                    <div
-                      key={item.label}
-                      className="flex items-center justify-between gap-3 text-sm"
-                    >
-                      <span className="inline-flex items-center gap-2">
-                        <span
-                          className="h-3 w-3 rounded-full"
-                          style={{ backgroundColor: item.color }}
-                        />
-                        {item.label}
-                      </span>
-                      <span className="font-semibold">{item.percent}%</span>
-                    </div>
-                  ))}
-                </div>
+                  <p
+                    className={`text-xs uppercase tracking-[0.2em] ${isDarkMode ? "text-white/50" : "text-gray-500"}`}
+                  >
+                    Goal
+                  </p>
+                  <p className="mt-3 text-2xl font-bold">
+                    {formatCurrency(monthlyBudget)}
+                  </p>
+                </button>
               </div>
             </div>
 
-            <div className="grid w-full gap-4 sm:grid-cols-3">
-              {overviewCards.map((card) => (
-                <div
-                  key={card.label}
-                  className={`rounded-2xl border p-4 text-left ${
-                    isDarkMode
-                      ? "border-white/10 bg-white/5"
-                      : "border-gray-200 bg-gray-50"
-                  }`}
-                >
-                  <p className="text-sm text-white/50">{card.label}</p>
-                  <p className="mt-2 text-2xl font-semibold">{card.value}</p>
-                </div>
-              ))}
-            </div>
           </Card>
-
-          <Card theme={isDarkMode ? "dark" : "light"} size="lg">
-            <div className="w-full text-left">
-              <p className="text-sm uppercase tracking-[0.3em] text-white/50">
-                Quick actions
-              </p>
-              <h2 className="mt-3 text-2xl font-semibold">Shortcuts</h2>
-            </div>
-
-            <div className="flex w-full flex-col gap-3">
-              <Link
-                to="/add-expense"
-                className={`w-full rounded-lg px-4 py-3 text-center font-medium transition ${
-                  isDarkMode
-                    ? "bg-white text-gray-900 hover:bg-white/90"
-                    : "bg-gray-900 text-white hover:bg-gray-800"
-                }`}
-              >
-                Add expense
-              </Link>
-              <Link
-                to="/manage-expenses"
-                className={`w-full rounded-lg px-4 py-3 text-center font-medium transition ${
-                  isDarkMode
-                    ? "border border-white/15 text-white hover:bg-white/5"
-                    : "border border-gray-300 text-gray-900 hover:bg-gray-50"
-                }`}
-              >
-                Manage expenses
-              </Link>
-            </div>
-
-            <div className="w-full pt-6 text-left">
-              <p className="text-sm uppercase tracking-[0.3em] text-white/50">
-                Goals
-              </p>
-              <h3 className="mt-3 text-xl font-semibold">This month</h3>
-
-              <div className="mt-5 space-y-4 text-left">
-                <div>
-                  <div className="mb-2 flex items-center justify-between text-sm">
-                    <span>Savings goal</span>
-                    <span>68%</span>
-                  </div>
-                  <div
-                    className={
-                      isDarkMode
-                        ? "h-2 rounded-full bg-white/10"
-                        : "h-2 rounded-full bg-gray-200"
-                    }
-                  >
-                    <div className="h-2 w-[68%] rounded-full bg-blue-500" />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="mb-2 flex items-center justify-between text-sm">
-                    <span>Spending limit</span>
-                    <span>42%</span>
-                  </div>
-                  <div
-                    className={
-                      isDarkMode
-                        ? "h-2 rounded-full bg-white/10"
-                        : "h-2 rounded-full bg-gray-200"
-                    }
-                  >
-                    <div className="h-2 w-[42%] rounded-full bg-emerald-500" />
-                  </div>
-                </div>
-
-                <Button
-                  size="md"
-                  variant={isDarkMode ? "light" : "dark"}
-                  fullWidth
-                >
-                  View reports
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </section>
-
-        <section className="grid gap-6 md:grid-cols-1">
           <Card
             theme={isDarkMode ? "dark" : "light"}
             size="lg"
-            className="md:col-span-1"
+            className="items-stretch text-left"
           >
-            <div className="w-full text-left">
-              <p className="text-sm uppercase tracking-[0.3em] text-white/50">
-                Recent expenses
+            <div className="w-full">
+              <p
+                className={`text-xs uppercase tracking-[0.2em] ${isDarkMode ? "text-white/50" : "text-gray-500"}`}
+              >
+                Quick Actions
               </p>
-              <h2 className="mt-3 text-2xl font-semibold">Latest activity</h2>
+              <h2 className="mt-2 text-xl font-semibold">Expense</h2>
             </div>
 
-            <div
-              className={`w-full overflow-hidden rounded-2xl border text-left ${
-                isDarkMode ? "border-white/10" : "border-gray-200"
-              }`}
-            >
-              <table className="w-full border-collapse text-left">
-                <thead>
-                  <tr
-                    className={
-                      isDarkMode
-                        ? "bg-white/5 text-white/50"
-                        : "bg-gray-50 text-gray-500"
-                    }
+            <div className="mt-4 flex w-full flex-col gap-2">
+              <Button
+                variant={isDarkMode ? "light" : "dark"}
+                onClick={() => navigate("/add-expense")}
+                fullWidth
+              >
+                Add Expense
+              </Button>
+              <Button
+                variant="blue"
+                onClick={() => navigate("/manage-expenses")}
+                fullWidth
+              >
+                Manage
+              </Button>
+            </div>
+
+            <div className="mt-auto flex flex-col gap-4 pt-6">
+              <p
+                className={`text-xs uppercase tracking-[0.2em] ${isDarkMode ? "text-white/50" : "text-gray-500"}`}
+              >
+                Budget Progress
+              </p>
+              <div className="space-y-2">
+                <div className="flex items-end justify-between">
+                  <span className="text-sm font-medium">
+                    {formatCurrency(monthlySpent)} /{" "}
+                    {formatCurrency(monthlyBudget)}
+                  </span>
+                  <span
+                    className={`text-xs font-semibold ${goalProgress > 100 ? "text-red-400" : "text-emerald-400"}`}
                   >
-                    <th className="px-4 py-3 text-sm font-medium">Date</th>
-                    <th className="px-4 py-3 text-sm font-medium">
-                      Description
-                    </th>
-                    <th className="px-4 py-3 text-sm font-medium">Amount</th>
-                    <th className="px-4 py-3 text-sm font-medium">Category</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentExpenses.map((expense) => (
-                    <tr
-                      key={`${expense.date}-${expense.description}`}
-                      className={
-                        isDarkMode
-                          ? "border-t border-white/10"
-                          : "border-t border-gray-200"
-                      }
-                    >
-                      <td className="px-4 py-4 text-sm text-white/50">
-                        {expense.date}
-                      </td>
-                      <td className="px-4 py-4 font-medium">
-                        {expense.description}
-                      </td>
-                      <td className="px-4 py-4 text-sm font-semibold">
-                        {expense.amount}
-                      </td>
-                      <td className="px-4 py-4">
-                        <span className="inline-flex items-center gap-3 text-sm">
-                          <span
-                            className={`h-4 w-4 rounded-sm ${expense.color}`}
-                          />
-                          {expense.category}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                    {Math.round(goalProgress)}%
+                  </span>
+                </div>
+                <div className="relative w-full">
+                  <div
+                    className={`h-3 w-full rounded-full overflow-hidden ${isDarkMode ? "bg-white/10" : "bg-gray-300"}`}
+                  >
+                    <div
+                      className={`h-full rounded-full transition-all ${goalProgress > 100 ? "bg-red-500" : "bg-blue-500"}`}
+                      style={{ width: `${Math.min(goalProgress, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </Card>
-        </section>
-      </main>
+        </div>
+
+        <Card
+          theme={isDarkMode ? "dark" : "light"}
+          size="lg"
+          className="items-start text-left"
+        >
+          <div className="w-full">
+            <p
+              className={`text-xs uppercase tracking-[0.2em] ${isDarkMode ? "text-white/50" : "text-gray-500"}`}
+            >
+              Recent Activity
+            </p>
+            <h2 className="text-xl font-semibold">Latest expenses</h2>
+          </div>
+
+          <div className="mt-4 w-full space-y-3">
+            {summary.recent.length > 0 ? (
+              summary.recent.map((expense) => (
+                <div
+                  key={expense.id}
+                  className={`flex items-center justify-between rounded-lg p-3 ${isDarkMode ? "bg-white/5" : "bg-gray-100"}`}
+                >
+                  <div className="flex-1">
+                    <p className="font-medium">{expense.title}</p>
+                    <p
+                      className={`text-xs ${isDarkMode ? "text-white/50" : "text-gray-500"}`}
+                    >
+                      {expense.expenseDate.slice(0, 10)} •{" "}
+                      {expense.category?.name || "Uncategorized"}
+                    </p>
+                  </div>
+                  <p className="font-semibold">
+                    {formatCurrency(Number(expense.amount))}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p
+                className={`text-sm ${isDarkMode ? "text-white/50" : "text-gray-500"}`}
+              >
+                No expenses yet. Add one to get started.
+              </p>
+            )}
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }
