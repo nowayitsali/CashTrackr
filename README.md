@@ -6,7 +6,8 @@ This project was built as a portfolio piece to demonstrate full-stack developmen
 
 ## Demo
 
-- 🎥 Video walkthrough: 
+- 🎥 Video walkthrough:
+
 https://github.com/user-attachments/assets/de18e214-d4a5-4bf5-8497-568337bbadd2
 
 ## Key Features
