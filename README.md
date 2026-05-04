@@ -1,46 +1,38 @@
-### ⚠️ Work in Progress – Actively developing core features and backend integration.
+# CashTrackr AI
 
-# 📌 Current Status
-- UI fully designed in Figma
-- Core routing implemented
-- Expense management system in progress
-- Backend and AI integration under development
+CashTrackr AI is a full-stack personal finance web application for tracking expenses, organizing categories, and reviewing spending trends in a clean, modern dashboard. It includes authentication, dark/light mode, and AI-powered categorization to help users stay organized with less manual effort. ✨
 
-# About CashTrackr
+This project was built as a portfolio piece to demonstrate full-stack development with React, TypeScript, Tailwind CSS, Node.js, Express, PostgreSQL, Prisma, and Google Generative AI. 🚀
 
-CashTrackr AI is a full-stack finance management web application that helps users track, categorize, and analyze their expenses using AI.
+## Demo
 
-This project is my first large-scale application built with modern frontend technologies and structured backend integration. It focuses on clean UI/UX, scalable architecture, and intelligent financial insights using AI.
+- 🎥 Video walkthrough: https://github.com/user-attachments/assets/e32960db-f7fd-4128-afa6-0cf446155911
 
+## Key Features
 
-My first big project using JavaScript/React, Typescript and TailwindCSS.
+- 🔐 User authentication with register and login flows
+- 💸 Create, edit, and delete expenses
+- 📊 Dashboard for viewing and managing spending data
+- 🤖 AI-powered expense categorization
+- 🗂️ Manual category editing and organization
+- 🌙 Dark and light mode support
+- 📱 Responsive, custom-designed fintech-style interface
+- 🎨 Built from a Figma-based UI concept
 
-This project aims to track your finances using AI.
+## What Makes It Stand Out
 
-# ✨ Features:
-## 💰 Expense Management
-- Add, edit, and delete expenses manually
-- Bulk selection and removal
-- Upload/import bank statements (planned)
-## 🤖 AI Categorisation
-- Automatically categorise expenses using AI
-- Intelligent classification based on transaction description
-- Manually adjust if needed.
-## 📊 Analytics Dashboard
-- Monthly spending overview
-- Category breakdown (donut chart)
-- Summary of highest spending categories
-- Transaction count & total expenditure
-- Actionable AI-generated financial insights (planned)
-## 🎨 Modern UI/UX
-- Fully custom Figma-designed interface
-- Dark & light mode support
-- Responsive and minimal fintech-inspired design
-- Clean component-based architecture
+- Full-stack architecture with a separate frontend and backend
+- AI integration for smarter expense organization
+- PostgreSQL + Prisma data modeling
+- Secure authentication using JWT and bcrypt
+- Clean UI built with reusable components and modern styling
+- Strong portfolio value for demonstrating product thinking and implementation
 
-# 🛠 Tech Stack
-## Frontend
-- React (with Vite)
+## Tech Stack
+
+### Frontend
+
+- React with Vite
 - TypeScript
 - TailwindCSS
 - React Router
