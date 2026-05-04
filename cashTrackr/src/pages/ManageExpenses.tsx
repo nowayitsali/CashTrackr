@@ -94,6 +94,66 @@ function ManageExpenses() {
 
   const [showOrganizeModal, setShowOrganizeModal] = useState(false);
   const [suggestedGroups, setSuggestedGroups] = useState<Array<any>>([]);
+  const [organizingLoading, setOrganizingLoading] = useState(false);
+  const [selectedUpdates, setSelectedUpdates] = useState<
+    Record<string, string>
+  >({});
+
+  async function fetchSuggestions() {
+    setOrganizingLoading(true);
+    setError("");
+    try {
+      const groups = await authFetch<Array<any>>("/organize/suggest", {
+        method: "POST",
+      });
+      if (!groups || groups.length === 0) {
+        setError(
+          "Your categories are already well-organized! No suggestions needed.",
+        );
+        return;
+      }
+      setSuggestedGroups(groups);
+      setSelectedUpdates({});
+      setShowOrganizeModal(true);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch suggestions",
+      );
+    } finally {
+      setOrganizingLoading(false);
+    }
+  }
+
+  async function applyOrganization() {
+    // Build updates for all suggestion groups; if user didn't edit a name,
+    // use the suggested label by default so Apply works without manual edits.
+    const updates = suggestedGroups.map((g) => ({
+      itemIds: g.itemIds,
+      newCategory: selectedUpdates[g.id] || g.suggestedLabel,
+    }));
+
+    if (!updates || updates.length === 0) {
+      setError("No suggestions to apply");
+      return;
+    }
+
+    setOrganizingLoading(true);
+    try {
+      await authFetch("/organize/apply", {
+        method: "POST",
+        body: JSON.stringify({ updates }),
+      });
+      setShowOrganizeModal(false);
+      setSuggestedGroups([]);
+      setSelectedUpdates({});
+      setError("");
+      await loadExpenses();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to apply changes");
+    } finally {
+      setOrganizingLoading(false);
+    }
+  }
 
   function buildSuggestions() {
     const byCategory: Record<string, ExpenseItem[]> = {};
@@ -141,10 +201,8 @@ function ManageExpenses() {
             <div className="mt-4 flex items-center gap-3">
               <Button
                 variant="blue"
-                onClick={() => {
-                  buildSuggestions();
-                  setShowOrganizeModal(true);
-                }}
+                onClick={() => fetchSuggestions()}
+                isLoading={organizingLoading}
               >
                 Organize with AI
               </Button>
@@ -306,11 +364,9 @@ function ManageExpenses() {
             <div
               className={`relative w-full max-w-3xl rounded-2xl p-6 ${isDarkMode ? "bg-[#0B0D10] text-white" : "bg-white text-gray-900"}`}
             >
-              <h3 className="text-lg font-semibold">
-                Organize expenses (preview)
-              </h3>
+              <h3 className="text-lg font-semibold">Organize expenses</h3>
               <p className="mt-2 text-sm text-gray-400">
-                This preview shows suggested groups and labels. No changes are
+                Suggested groups and labels are shown below. No changes are
                 saved until you apply.
               </p>
 
@@ -322,41 +378,36 @@ function ManageExpenses() {
                 ) : (
                   suggestedGroups.map((g) => (
                     <div key={g.id} className="rounded-lg border p-3">
-                      <div className="flex items-center justify-between">
-                        <div>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="text-sm text-white/50 mb-2">
+                            From:{" "}
+                            <span className="font-medium">
+                              {g.currentCategory}
+                            </span>
+                          </div>
                           <input
-                            className="rounded px-2 py-1 bg-transparent border border-white/10"
-                            value={g.suggestedLabel}
-                            onChange={() => {}}
+                            className={`w-full rounded px-2 py-1 bg-transparent border ${isDarkMode ? "border-white/20" : "border-gray-300"} text-white`}
+                            value={selectedUpdates[g.id] || g.suggestedLabel}
+                            onChange={(e) =>
+                              setSelectedUpdates((prev) => ({
+                                ...prev,
+                                [g.id]: e.target.value,
+                              }))
+                            }
+                            placeholder="Category name"
                           />
-                          <span className="ml-3 text-sm text-white/50">
-                            {g.count} items
+                          <span className="ml-3 text-sm text-white/50 mt-2 block">
+                            {g.count} items • Confidence:{" "}
+                            {Math.round(g.confidence * 100)}%
                           </span>
                         </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="light">
-                            Preview
-                          </Button>
-                          <Button size="sm" variant="blue">
-                            Apply
-                          </Button>
-                        </div>
                       </div>
-                      <div className="mt-2 text-sm text-white/60">
-                        {g.examples.map((ex: ExpenseItem) => (
-                          <div
-                            key={ex.id}
-                            className="flex items-center justify-between py-1"
-                          >
-                            <div>
-                              <div className="font-medium">{ex.title}</div>
-                              <div className="text-xs text-white/40">
-                                {ex.note || ""}
-                              </div>
-                            </div>
-                            <div className="ml-4">
-                              ${Number(ex.amount).toFixed(2)}
-                            </div>
+                      <div className="mt-3 space-y-1 text-sm text-white/60">
+                        {g.examples.map((ex: any) => (
+                          <div key={ex.id} className="flex gap-2">
+                            <span className="font-medium">{ex.title}</span>
+                            <span className="text-white/40">${ex.amount}</span>
                           </div>
                         ))}
                       </div>
@@ -370,7 +421,15 @@ function ManageExpenses() {
                   variant={isDarkMode ? "light" : "dark"}
                   onClick={() => setShowOrganizeModal(false)}
                 >
-                  Close
+                  Cancel
+                </Button>
+                <Button
+                  variant="blue"
+                  onClick={applyOrganization}
+                  isLoading={organizingLoading}
+                  disabled={suggestedGroups.length === 0 || organizingLoading}
+                >
+                  Apply Changes
                 </Button>
               </div>
             </div>

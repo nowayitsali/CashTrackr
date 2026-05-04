@@ -20,6 +20,11 @@ app.use('/auth', authRoutes);
 const expenseRoutes = require('./routes/expenses');
 app.use('/expenses', expenseRoutes);
 
+// Organize routes (AI)
+const organizeRoutes = require('./routes/organize');
+const { verifyToken } = require('./middleware/auth');
+app.use('/organize', verifyToken, organizeRoutes);
+
 app.get("/db-test", async (req, res) => {
   try {
     const result = await pool.query("SELECT NOW() AS current_time");
