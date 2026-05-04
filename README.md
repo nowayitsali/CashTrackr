@@ -1,55 +1,83 @@
-### ⚠️ Work in Progress – Actively developing core features and backend integration.
+# CashTrackr AI
 
-# 📌 Current Status
-- UI fully designed in Figma
-- Core routing implemented
-- Expense management system in progress
-- Backend and AI integration under development
+CashTrackr AI is a full-stack personal finance web application that helps users add, manage, and categorise their expenses in a clean dashboard.
 
-# About CashTrackr
+The project includes user authentication, expense management, dark and light mode, and AI-powered expense categorisation. Users can add items to their expense list, view them on the dashboard, and use AI to automatically categorise each item.
 
-CashTrackr AI is a full-stack finance management web application that helps users track, categorize, and analyze their expenses using AI.
+This was my first large-scale project using React, TypeScript, TailwindCSS, Node.js/Express, and AI integration. I also created a video walkthrough showcasing the main features of the application at the bottom of this page.
 
-This project is my first large-scale application built with modern frontend technologies and structured backend integration. It focuses on clean UI/UX, scalable architecture, and intelligent financial insights using AI.
+## ✨ Features
 
+### 💰 Expense Management
+- Add and manage expenses
+- View all added expenses in a dashboard list
+- Organize expenses by category
+- Simple and clean expense tracking flow
 
-My first big project using JavaScript/React, Typescript and TailwindCSS.
+### 🤖 AI Categorisation
+- Automatically categorise expense items using AI
+- Categorisation based on the item or transaction description
+- Helps make expense tracking faster and more organised
 
-This project aims to track your finances using AI.
+### 🔐 Authentication
+- Login page
+- Register page
+- User-based access flow
 
-# ✨ Features:
-## 💰 Expense Management
-- Add, edit, and delete expenses manually
-- Bulk selection and removal
-- Upload/import bank statements (planned)
-## 🤖 AI Categorisation
-- Automatically categorise expenses using AI
-- Intelligent classification based on transaction description
-- Manually adjust if needed.
-## 📊 Analytics Dashboard
-- Monthly spending overview
-- Category breakdown (donut chart)
-- Summary of highest spending categories
-- Transaction count & total expenditure
-- Actionable AI-generated financial insights (planned)
-## 🎨 Modern UI/UX
+### 📊 Dashboard
+- View added expense items
+- Track spending in one central place
+- Clean dashboard layout for managing finances
+
+### 🎨 Modern UI/UX
 - Fully custom Figma-designed interface
-- Dark & light mode support
-- Responsive and minimal fintech-inspired design
+- Dark mode and light mode support
+- Minimal fintech-inspired design
 - Clean component-based architecture
+- Responsive layout
 
-# 🛠 Tech Stack
-## Frontend
-- React (with Vite)
+### 🎥 Project Walkthrough
+- A video demo was created to showcase the full application
+- Demonstrates login/register pages, dashboard, theme switching, expense management, and AI categorization
+
+## 🛠 Tech Stack
+
+### Frontend
+- React with Vite
 - TypeScript
 - TailwindCSS
 - React Router
-## Backend (Planned / In Progress)
-- Node.js + Express
-- SQLite (PostgreSQL planned for scaling)
-- AI integration (Gemini API)
 
-# 🔵 Design:
-<img width="1066" height="790" alt="image" src="https://github.com/user-attachments/assets/340b0ecb-a42b-4ad2-a7b4-fb4f47a83f28" />
-<img width="1066" height="790" alt="image" src="https://github.com/user-attachments/assets/da4cd8ff-9b08-4d35-91b9-d1ac6eb554e8" />
-<img width="1076" height="796" alt="image" src="https://github.com/user-attachments/assets/885b1ddd-5a05-449e-982f-8eb6e17db05c" />
+### Backend
+- Node.js and Express for backend API routes
+- Prisma ORM
+- PostgreSQL database for user, expense, category, and budget data
+- bcrypt for password hashing
+- JSON Web Token authentication
+- dotenv for environment variables
+- CORS for cross-origin requests
+
+### AI Integration
+- Google Generative AI SDK for automatic expense categorisation
+
+### Development Tools
+- ESLint
+- Nodemon
+- TypeScript compiler
+- DBeaver for database management and query testing
+
+## 📌 Project Status
+
+CashTrackr AI is mostly complete, with the core features implemented and showcased in a video walkthrough.
+
+Current completed features include:
+- Frontend UI
+- Routing
+- Login and register pages
+- Dashboard
+- Expense list management
+- Dark and light mode
+- AI-powered categorisation
+
+## 📸 Showcase (increase volume)
+https://github.com/user-attachments/assets/e32960db-f7fd-4128-afa6-0cf446155911
