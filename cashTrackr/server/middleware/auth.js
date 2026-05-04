@@ -6,7 +6,7 @@ const verifyToken = (req, res, next) => {
   if (!token) return res.status(401).json({ error: 'token required' });
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'devsecret');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.userId = decoded.userId;
     next();
   } catch (err) {

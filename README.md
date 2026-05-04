@@ -110,11 +110,20 @@ This project was built as a portfolio piece to demonstrate full-stack developmen
 
 ## Environment Variables
 
-Add the required variables in the backend `.env` file:
+Create a `.env` file in the `server` folder with the following variables:
 
-- `DATABASE_URL`
-- `GEMINI_API_KEY`
-- `JWT_SECRET`
+```env
+PORT=5000
+DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/cashtrackr
+JWT_SECRET=Add your JWT_SECRET here
+GEMINI_API_KEY=Add your GEMINI_API_KEY here
+```
+
+**Important:** Never commit sensitive credentials to version control. Use environment variables for:
+
+- `GEMINI_API_KEY`: Get from [Google AI Studio](https://aistudio.google.com/apikey)
+- `JWT_SECRET`: A secure random string for token signing
+- `DATABASE_URL`: Your PostgreSQL connection string
 
 ## Project Status
 
