@@ -34,14 +34,96 @@ This project was built as a portfolio piece to demonstrate full-stack developmen
 
 - React with Vite
 - TypeScript
-- TailwindCSS
+- Tailwind CSS
 - React Router
-## Backend (Planned / In Progress)
-- Node.js + Express
-- SQLite (PostgreSQL planned for scaling)
-- AI integration (Gemini API)
 
-# 🔵 Design:
-<img width="1066" height="790" alt="image" src="https://github.com/user-attachments/assets/340b0ecb-a42b-4ad2-a7b4-fb4f47a83f28" />
-<img width="1066" height="790" alt="image" src="https://github.com/user-attachments/assets/da4cd8ff-9b08-4d35-91b9-d1ac6eb554e8" />
-<img width="1076" height="796" alt="image" src="https://github.com/user-attachments/assets/885b1ddd-5a05-449e-982f-8eb6e17db05c" />
+### Backend
+
+- Node.js
+- Express
+- PostgreSQL
+- Prisma ORM
+- JWT authentication
+- bcrypt password hashing
+- CORS
+- dotenv
+
+### AI Integration
+
+- Google Generative AI SDK
+
+### Development Tools
+
+- DBeaver
+- ESLint
+- Nodemon
+- TypeScript
+
+## Project Structure
+
+- `src/` — frontend application code
+- `src/pages/` — page-level views such as dashboard, login, register, and expense management
+- `src/components/` — reusable UI components
+- `server/` — backend API
+- `server/routes/` — Express route handlers
+- `server/prisma/` — Prisma schema and database layer
+
+## Core Functionality
+
+### Expense Management
+
+- Add new expenses with amount, date, category, and note fields
+- Edit or delete existing expenses
+- View and organize expenses in a dashboard layout
+
+### AI Categorization
+
+- Suggests better category groupings based on existing expense data
+- Helps reduce manual categorization work
+- Supports previewing and applying suggested changes
+
+### Authentication
+
+- Register new users
+- Log in securely
+- Protect app data per user account
+
+## Setup
+
+### Prerequisites
+
+- Node.js
+- npm
+- PostgreSQL
+
+### Frontend
+
+1. Install dependencies in the project root.
+2. Start the Vite development server.
+
+### Backend
+
+1. Install dependencies in the `server` folder.
+2. Configure your database connection.
+3. Run Prisma generation or migrations if needed.
+4. Start the backend server.
+
+## Environment Variables
+
+Add the required variables in the backend `.env` file:
+
+- `DATABASE_URL`
+- `GEMINI_API_KEY`
+- `JWT_SECRET`
+
+## Project Status
+
+The core application is complete, including authentication, expense management, dashboard display, theme switching, and AI categorization. The project is actively being refined and can be extended with additional analytics and finance features.
+
+## Future Improvements
+
+- Advanced analytics and financial insights
+- Budget tracking and alerts
+- Bank statement import
+- Export features
+- Smarter AI categorization rules
