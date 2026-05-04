@@ -33,6 +33,13 @@ function formatCurrency(value: number) {
   }).format(value);
 }
 
+function formatDate(isoDate: string) {
+  const date = new Date(isoDate);
+  const month = date.toLocaleString("en-US", { month: "short" });
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${month} ${day}`;
+}
+
 function Dashboard() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
@@ -390,45 +397,78 @@ function Dashboard() {
         <Card
           theme={isDarkMode ? "dark" : "light"}
           size="lg"
-          className="items-start text-left"
+          className="items-start text-left w-full"
         >
           <div className="w-full">
             <p
               className={`text-xs uppercase tracking-[0.2em] ${isDarkMode ? "text-white/50" : "text-gray-500"}`}
             >
-              Recent Activity
+              All expenses
             </p>
-            <h2 className="text-xl font-semibold">Latest expenses</h2>
+            <h2 className="text-xl font-semibold">Expense list</h2>
           </div>
 
-          <div className="mt-4 w-full space-y-3">
-            {summary.recent.length > 0 ? (
-              summary.recent.map((expense) => (
-                <div
-                  key={expense.id}
-                  className={`flex items-center justify-between rounded-lg p-3 ${isDarkMode ? "bg-white/5" : "bg-gray-100"}`}
-                >
-                  <div className="flex-1">
-                    <p className="font-medium">{expense.title}</p>
-                    <p
-                      className={`text-xs ${isDarkMode ? "text-white/50" : "text-gray-500"}`}
-                    >
-                      {expense.expenseDate.slice(0, 10)} •{" "}
-                      {expense.category?.name || "Uncategorized"}
-                    </p>
-                  </div>
-                  <p className="font-semibold">
-                    {formatCurrency(Number(expense.amount))}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <p
-                className={`text-sm ${isDarkMode ? "text-white/50" : "text-gray-500"}`}
+          <div
+            className={`w-full overflow-hidden rounded-2xl border ${isDarkMode ? "border-white/10" : "border-gray-200"}`}
+          >
+            <table className="w-full border-collapse text-left">
+              <thead
+                className={
+                  isDarkMode
+                    ? "bg-white/5 text-white/50"
+                    : "bg-gray-50 text-gray-500"
+                }
               >
-                No expenses yet. Add one to get started.
-              </p>
-            )}
+                <tr>
+                  <th className="px-4 py-3 text-sm font-medium">Date</th>
+                  <th className="px-4 py-3 text-sm font-medium">
+                    Description
+                  </th>
+                  <th className="px-4 py-3 text-sm font-medium">Category</th>
+                  <th className="px-4 py-3 text-sm font-medium">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {expenses.length > 0 ? (
+                  expenses.map((expense) => (
+                    <tr
+                      key={expense.id}
+                      className={
+                        isDarkMode
+                          ? "border-t border-white/10"
+                          : "border-t border-gray-200"
+                      }
+                    >
+                      <td className="px-4 py-3 text-sm">
+                        {formatDate(expense.expenseDate)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div>
+                          <p className="font-medium">{expense.title}</p>
+                          {expense.note ? (
+                            <p className="text-sm text-white/50">
+                              {expense.note}
+                            </p>
+                          ) : null}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {expense.category?.name || "Uncategorized"}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {formatCurrency(Number(expense.amount))}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-6 text-center text-sm text-white/50">
+                      No expenses yet. Add one to get started.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </Card>
       </div>

@@ -14,6 +14,13 @@ type ExpenseItem = {
   category?: { id: number; name: string } | null;
 };
 
+function formatDate(isoDate: string) {
+  const date = new Date(isoDate);
+  const month = date.toLocaleString("en-US", { month: "short" });
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${month} ${day}`;
+}
+
 function ManageExpenses() {
   const [isDarkMode] = useState(true);
   const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
@@ -85,6 +92,29 @@ function ManageExpenses() {
 
   const rows = useMemo(() => expenses, [expenses]);
 
+  const [showOrganizeModal, setShowOrganizeModal] = useState(false);
+  const [suggestedGroups, setSuggestedGroups] = useState<Array<any>>([]);
+
+  function buildSuggestions() {
+    const byCategory: Record<string, ExpenseItem[]> = {};
+    for (const e of expenses) {
+      const key = e.category?.name || "Uncategorized";
+      if (!byCategory[key]) byCategory[key] = [];
+      byCategory[key].push(e);
+    }
+
+    const groups = Object.entries(byCategory).map(([k, items], idx) => ({
+      id: `g${idx}`,
+      suggestedLabel: k === "Uncategorized" ? "Other" : k,
+      confidence: 0.6,
+      count: items.length,
+      examples: items.slice(0, 3),
+      itemIds: items.map((i) => i.id),
+    }));
+
+    setSuggestedGroups(groups);
+  }
+
   return (
     <div
       className={`min-h-screen p-6 ${isDarkMode ? "bg-[#0F1115] text-white" : "bg-white text-gray-900"}`}
@@ -108,6 +138,23 @@ function ManageExpenses() {
               Manage expenses
             </p>
             <h1 className="mt-3 title-serif text-3xl font-normal">Expenses</h1>
+            <div className="mt-4 flex items-center gap-3">
+              <Button
+                variant="blue"
+                onClick={() => {
+                  buildSuggestions();
+                  setShowOrganizeModal(true);
+                }}
+              >
+                Organize with AI
+              </Button>
+              <Button
+                variant={isDarkMode ? "light" : "dark"}
+                onClick={() => navigate("/add-expense")}
+              >
+                Add Expense
+              </Button>
+            </div>
           </div>
 
           {error ? (
@@ -149,7 +196,7 @@ function ManageExpenses() {
                       }
                     >
                       <td className="px-4 py-3 text-sm">
-                        {expense.expenseDate.slice(0, 10)}
+                        {formatDate(expense.expenseDate)}
                       </td>
                       <td className="px-4 py-3">
                         {editingId === expense.id ? (
@@ -250,6 +297,85 @@ function ManageExpenses() {
             </div>
           )}
         </Card>
+        {showOrganizeModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div
+              className="absolute inset-0 bg-black/50"
+              onClick={() => setShowOrganizeModal(false)}
+            />
+            <div
+              className={`relative w-full max-w-3xl rounded-2xl p-6 ${isDarkMode ? "bg-[#0B0D10] text-white" : "bg-white text-gray-900"}`}
+            >
+              <h3 className="text-lg font-semibold">
+                Organize expenses (preview)
+              </h3>
+              <p className="mt-2 text-sm text-gray-400">
+                This preview shows suggested groups and labels. No changes are
+                saved until you apply.
+              </p>
+
+              <div className="mt-4 space-y-4 max-h-96 overflow-auto">
+                {suggestedGroups.length === 0 ? (
+                  <p className="text-sm text-gray-400">
+                    No suggestions available.
+                  </p>
+                ) : (
+                  suggestedGroups.map((g) => (
+                    <div key={g.id} className="rounded-lg border p-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <input
+                            className="rounded px-2 py-1 bg-transparent border border-white/10"
+                            value={g.suggestedLabel}
+                            onChange={() => {}}
+                          />
+                          <span className="ml-3 text-sm text-white/50">
+                            {g.count} items
+                          </span>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="light">
+                            Preview
+                          </Button>
+                          <Button size="sm" variant="blue">
+                            Apply
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-sm text-white/60">
+                        {g.examples.map((ex: ExpenseItem) => (
+                          <div
+                            key={ex.id}
+                            className="flex items-center justify-between py-1"
+                          >
+                            <div>
+                              <div className="font-medium">{ex.title}</div>
+                              <div className="text-xs text-white/40">
+                                {ex.note || ""}
+                              </div>
+                            </div>
+                            <div className="ml-4">
+                              ${Number(ex.amount).toFixed(2)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="mt-4 flex justify-end gap-2">
+                <Button
+                  variant={isDarkMode ? "light" : "dark"}
+                  onClick={() => setShowOrganizeModal(false)}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
